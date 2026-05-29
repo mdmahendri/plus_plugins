@@ -1,0 +1,43 @@
+# Build Package Info Plus Example
+name: package_info_plus_web
+
+concurrency:
+  group: package_info_plus_${{ github.head_ref || github.ref_name }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    shell: bash
+
+on:
+  push:
+    branches:
+      - experiment/headless-web
+  pull_request:
+    paths:
+      - "packages/package_info_plus/**"
+      - ".github/workflows/package_info_plus.yaml"
+      - "!**.md"
+      - "!**.gitignore"
+
+env:
+  PLUGIN_SCOPE: "*package_info_plus*"
+  PLUGIN_EXAMPLE_SCOPE: "*package_info_plus_example*"
+
+jobs:
+  web_integration_test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: "Checkout repository"
+        uses: actions/checkout@v6
+      - uses: flutter-actions/setup-flutter@v4
+        with:
+          channel: stable
+          version: 3.41.9
+      - name: "Install Tools"
+        run: ./.github/workflows/scripts/install-tools.sh
+      - name: "Bootstrap Workspace"
+        run: melos bootstrap --scope="$PLUGIN_SCOPE"
+      - name: "Run Integration Test"
+        run: ./.github/workflows/scripts/integration-test.sh web package_info_plus_example
